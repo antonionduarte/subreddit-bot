@@ -171,6 +171,7 @@ Functions related to user flairs
 """
 
 
+# Function related to updating the flair for all the users
 def update_flairs(subreddit: Subreddit, users, c, conn):
     moderators = list()
     for moderator in subreddit.moderator():
@@ -203,6 +204,7 @@ Functions related to the post when adding and removing users
 """
 
 
+# Function that makes a post with the recap of the bot's activity
 def make_post(reddit: Reddit, subreddit: Subreddit, invited, removed):
     date = datetime.date.today()
     date_str = date.strftime("%Y-%m-%d")
