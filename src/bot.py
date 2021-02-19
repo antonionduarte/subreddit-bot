@@ -73,6 +73,7 @@ def remove_users(reddit: Reddit, users, subreddit, c, conn):
         print(user)
     print('Amount of users deleted: ', len(to_delete))
     print('')
+    return to_delete
 
 
 # Helper function to remove, to iterate over submissions and comments made
@@ -95,14 +96,20 @@ def iterate_over_days(to_iterate, subreddit, time_to_iterate):
 # Function that updates the database, adding the new contributor
 def update_database(c, conn, users, subreddit: Subreddit):
     date = datetime.date.today()
+    contributors = list()
     for contributor in subreddit.contributor():
+        contributors.append(contributor)
+    for contributor in contributors:
         if users.count(contributor) == 0:
             contributor_name = contributor.name
             c.execute('INSERT INTO Users VALUES(?, ?)',
                       (contributor_name, date,))
             conn.commit()
-    print('Updated database')
-    print('')
+    for user in users:
+        if contributors.count(user) == 0:
+            c.execute('DELETE FROM Users WHERE Username=?', (user,))
+            conn.commit()
+    print('Updated database\n')
 
 
 """
@@ -160,6 +167,62 @@ def convert_utc_datetime(utc):
 
 
 """
+Functions related to user flairs
+"""
+
+
+def update_flairs(subreddit: Subreddit, users, c, conn):
+    moderators = list()
+    for moderator in subreddit.moderator():
+        moderators.append(moderator)
+    for user in users:
+        flair_set = False
+        if not moderators.count(user) == 0:
+            flair_set = True
+            continue
+        join_date = get_user_join_date(user, c, conn)
+        days = (datetime.date.today() - join_date).days
+        print(days)
+        flairs = config.flairs
+        for flair in flairs:
+            if flair[2] >= days:
+                subreddit.flair.set(user, flair[0], flair_template_id=flair[1])
+                print(flair[0])
+                flair_set = True
+                break
+            if not flair_set:
+                to_set = flairs[len(flairs) - 1]
+                subreddit.flair.set(
+                    user, to_set[0], flair_template_id=to_set[1])
+                print(to_set[0])
+    print('Flairs updated\n')
+
+
+"""
+Functions related to the post when adding and removing users
+"""
+
+
+def make_post(reddit: Reddit, subreddit: Subreddit, invited, removed):
+    date = datetime.date.today()
+    date_str = date.strftime("%Y-%m-%d")
+    title = date_str + ' - Bot Recap'
+    selftext = ''
+    if config.remove_users:
+        if not len(removed) == 0:
+            selftext = selftext + 'Kicked users:  \n'
+            for user in removed:
+                selftext = selftext + '* u/' + user.name + '\n'
+    if config.invite_users:
+        selftext = selftext + '\nAdded users:  \n'
+        for user in invited:
+            selftext = selftext + '* u/' + user.name + '\n'
+    reddit.validate_on_submit = True
+    subreddit.submit(title, selftext=selftext)
+    print('Post made\n')
+
+
+"""
 Main function
 """
 
@@ -172,11 +235,17 @@ def main():
     users = get_subscribed_users(c, conn)
     update_database(c, conn, users, subreddit)
     users = get_subscribed_users(c, conn)
+    removed_users = list()
+    invited_users = list()
     if config.remove_users:
-        remove_users(reddit, users, subreddit, c, conn)
+        removed_users = remove_users(reddit, users, subreddit, c, conn)
     if config.invite_users:
-        users_to_add = get_user_list(reddit)
-        invite_users_subreddit(users, users_to_add, subreddit)
+        invited_users = get_user_list(reddit)
+        invite_users_subreddit(users, invited_users, subreddit)
+    if config.update_flairs:
+        update_flairs(subreddit, users, c, conn)
+    if config.updates_post:
+        make_post(reddit, subreddit, invited_users, removed_users)
     print('Everything worked.')
 
 
