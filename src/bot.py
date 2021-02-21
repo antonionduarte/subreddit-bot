@@ -97,7 +97,7 @@ def iterate_over_days(to_iterate, subreddit, time_to_iterate):
 def update_database(c, conn, users, subreddit: Subreddit):
     date = datetime.date.today()
     contributors = list()
-    for contributor in subreddit.contributor():
+    for contributor in subreddit.contributor(limit=0x7D0):
         contributors.append(contributor)
     for contributor in contributors:
         if users.count(contributor) == 0:
