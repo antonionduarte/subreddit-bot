@@ -59,10 +59,10 @@ def remove_users(reddit: Reddit, users, subreddit, c, conn):
         if not moderators.count(user) == 0:
             in_subreddit = True
             continue
-        iterate_over_days(redditor.comments.new(),
-                          subreddit, config.removal_time)
-        iterate_over_days(redditor.submissions.new(),
-                          subreddit, config.removal_time)
+        in_subreddit = iterate_over_days(redditor.comments.new(limit=1000),
+                                         subreddit, config.removal_time)
+        in_subreddit = iterate_over_days(redditor.submissions.new(limit=1000),
+                                         subreddit, config.removal_time)
         if not in_subreddit:
             to_delete.append(user)
             subreddit.contributor.remove(user)
@@ -171,7 +171,6 @@ Functions related to user flairs
 """
 
 
-# Function related to updating the flair for all the users
 def update_flairs(subreddit: Subreddit, users, c, conn):
     moderators = list()
     for moderator in subreddit.moderator():
@@ -204,7 +203,6 @@ Functions related to the post when adding and removing users
 """
 
 
-# Function that makes a post with the recap of the bot's activity
 def make_post(reddit: Reddit, subreddit: Subreddit, invited, removed):
     date = datetime.date.today()
     date_str = date.strftime("%Y-%m-%d")
@@ -249,6 +247,7 @@ def main():
     if config.updates_post:
         make_post(reddit, subreddit, invited_users, removed_users)
     print('Everything worked.')
+    print(len(users))
 
 
 if __name__ == '__main__':
