@@ -182,7 +182,6 @@ def update_flairs(subreddit: Subreddit, users, c, conn):
             continue
         join_date = get_user_join_date(user, c, conn)
         days = (datetime.date.today() - join_date).days
-        print(days)
         flairs = config.flairs
         for flair in flairs:
             if flair[2] >= days:
@@ -190,11 +189,11 @@ def update_flairs(subreddit: Subreddit, users, c, conn):
                 print(flair[0])
                 flair_set = True
                 break
-            if not flair_set:
-                to_set = flairs[len(flairs) - 1]
-                subreddit.flair.set(
-                    user, to_set[0], flair_template_id=to_set[1])
-                print(to_set[0])
+        if not flair_set:
+            to_set = flairs[len(flairs) - 1]
+            subreddit.flair.set(
+                user, to_set[0], flair_template_id=to_set[1])
+            print(to_set[0])
     print('Flairs updated\n')
 
 
@@ -243,11 +242,11 @@ def main():
         invited_users = get_user_list(reddit)
         invite_users_subreddit(users, invited_users, subreddit)
     if config.update_flairs:
+        users = get_subscribed_users(c, conn)
         update_flairs(subreddit, users, c, conn)
     if config.updates_post:
         make_post(reddit, subreddit, invited_users, removed_users)
     print('Everything worked.')
-    print(len(users))
 
 
 if __name__ == '__main__':
