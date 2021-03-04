@@ -59,10 +59,11 @@ def remove_users(reddit: Reddit, users, subreddit, c, conn):
         if not moderators.count(user) == 0:
             in_subreddit = True
             continue
-        in_subreddit = iterate_over_days(redditor.comments.new(limit=1000),
-                                         subreddit, config.removal_time)
-        in_subreddit = iterate_over_days(redditor.submissions.new(limit=1000),
-                                         subreddit, config.removal_time)
+        in_subreddit = iterate_over_days(redditor.comments.new(
+            limit=1000), subreddit, config.removal_time)
+        if not in_subreddit:
+            in_subreddit = iterate_over_days(redditor.submissions.new(
+                limit=1000), subreddit, config.removal_time)
         if not in_subreddit:
             to_delete.append(user)
             subreddit.contributor.remove(user)
