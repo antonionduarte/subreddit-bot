@@ -202,11 +202,11 @@ def make_post(reddit: Reddit, subreddit: Subreddit, invited, removed):
         if not len(removed) == 0:
             selftext = selftext + 'Kicked users:  \n'
             for user in removed:
-                selftext = selftext + '* u/' + user.name + '\n'
+                selftext = selftext + '* u/' + user + '\n'
     if config.invite_users:
         selftext = selftext + '\nAdded users:  \n'
         for user in invited:
-            selftext = selftext + '* u/' + user.name + '\n'
+            selftext = selftext + '* u/' + user + '\n'
     reddit.validate_on_submit = True
     subreddit.submit(title, selftext=selftext)
     print('Post made\n')
@@ -233,6 +233,7 @@ def main():
         invited_users = get_user_list(reddit)
         invite_users_subreddit(users, invited_users, subreddit)
     if config.update_flairs:
+        update_database(c, conn, users, subreddit)
         users = get_subscribed_users(c, conn)
         update_flairs(subreddit, users, c, conn)
     if config.updates_post:
