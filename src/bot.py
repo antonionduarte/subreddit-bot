@@ -62,12 +62,13 @@ def remove_users(reddit: Reddit, users, subreddit, c, conn):
                 in_subreddit = iterate_over_days(redditor.submissions.new(
                     limit=1000), subreddit, config.removal_time)
             if not in_subreddit:
-                to_delete.append(redditor)
+                to_delete.append(user)
                 continue
         except Exception:
             continue
     for user in to_delete:
-        subreddit.contributor.remove(user)
+        redditor = reddit.redditor(user)
+        subreddit.contributor.remove(redditor)
         c.execute('DELETE FROM Users WHERE Username=?', (user,))
         conn.commit()
         print(user)
