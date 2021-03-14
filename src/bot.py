@@ -48,29 +48,28 @@ def remove_users(reddit: Reddit, users, subreddit, c, conn):
     for moderator in moderator_relationship:
         moderators.append(moderator)
     for user in users:
-        redditor = reddit.redditor(user)
-        in_subreddit = False
-        join_date = get_user_join_date(user, c, conn)
-        today = datetime.date.today()
-        delta_time = today - join_date
-        if delta_time.days <= 7:
-            in_subreddit = True
-            continue
-        if not moderators.count(user) == 0:
-            in_subreddit = True
-            continue
-        in_subreddit = iterate_over_days(redditor.comments.new(
-            limit=1000), subreddit, config.removal_time)
-        if not in_subreddit:
-            in_subreddit = iterate_over_days(redditor.submissions.new(
+        try:
+            in_subreddit = False
+            redditor: Redditor = reddit.redditor(user)
+            today = datetime.date.today()
+            join_date = get_user_join_date(user, c, conn)
+            delta_time = today - join_date
+            if delta_time.days <= 7:
+                continue
+            in_subreddit = iterate_over_days(redditor.comments.new(
                 limit=1000), subreddit, config.removal_time)
-        if not in_subreddit:
-            to_delete.append(user)
-            subreddit.contributor.remove(user)
-            c.execute('DELETE FROM Users WHERE Username=?', (user,))
-            conn.commit()
-    print('Users deleted:')
+            if not in_subreddit:
+                in_subreddit = iterate_over_days(redditor.submissions.new(
+                    limit=1000), subreddit, config.removal_time)
+            if not in_subreddit:
+                to_delete.append(redditor)
+                continue
+        except Exception:
+            continue
     for user in to_delete:
+        subreddit.contributor.remove(user)
+        c.execute('DELETE FROM Users WHERE Username=?', (user,))
+        conn.commit()
         print(user)
     print('Amount of users deleted: ', len(to_delete))
     print('')
@@ -172,6 +171,7 @@ Functions related to user flairs
 """
 
 
+# Function that updates user flairs
 def update_flairs(subreddit: Subreddit, users, c, conn):
     moderators = list()
     for moderator in subreddit.moderator():
@@ -193,6 +193,7 @@ Functions related to the post when adding and removing users
 """
 
 
+# Function that makes post
 def make_post(reddit: Reddit, subreddit: Subreddit, invited, removed):
     date = datetime.date.today()
     date_str = date.strftime("%Y-%m-%d")
@@ -223,11 +224,11 @@ def main():
     reddit = connect_to_reddit()
     subreddit = reddit.subreddit(config.owned_subreddit)
     users = get_subscribed_users(c, conn)
-    update_database(c, conn, users, subreddit)
     users = get_subscribed_users(c, conn)
     removed_users = list()
     invited_users = list()
     if config.remove_users:
+        update_database(c, conn, users, subreddit)
         removed_users = remove_users(reddit, users, subreddit, c, conn)
     if config.invite_users:
         invited_users = get_user_list(reddit)
