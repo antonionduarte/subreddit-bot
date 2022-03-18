@@ -1,5 +1,7 @@
 # Subreddit Moderation Bot
 
+**WARNING** - This is old code from when I was dumb, you should probably **not** use this.
+
 *Invites a configurable amount of random users, retrieved from the comments of a randomly chosen subreddit.*  
 *Removes users that haven't posted in the subreddit in a configurable amount of days.*  
 *Makes a post containing the bot actions in the current run (a list of removed and invited users)*  
